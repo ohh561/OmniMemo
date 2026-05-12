@@ -1,0 +1,67 @@
+{
+  "title": "Q2 产品路线图规划会",
+  "date": "2026-05-15",
+  "duration_estimate": "1h30m",
+  "participants": [
+    "张三",
+    "李四",
+    "王五",
+    "赵六",
+    "孙七"
+  ],
+  "summary": "Q2 产品路线图规划会确定了两个核心方向：用户增长（优化 onboarding 流程）和技术债务清理（支付模块重构）。数据平台做前期调研，Q3 实施。",
+  "decisions": [
+    {
+      "topic": "Q2 核心方向",
+      "decision": "用户增长 + 技术债务并行",
+      "rationale": "直接影响 OKR 和 Q3 业务计划"
+    },
+    {
+      "topic": "数据平台节奏",
+      "decision": "Q2 调研设计，Q3 实施",
+      "rationale": "资源有限"
+    }
+  ],
+  "action_items": [
+    {
+      "owner": "张三",
+      "task": "完成支付模块技术方案评审",
+      "deadline": "2026-05-22",
+      "priority": "high"
+    },
+    {
+      "owner": "李四",
+      "task": "完成支付模块拆分第一阶段",
+      "deadline": "2026-05-29",
+      "priority": "high"
+    },
+    {
+      "owner": "王五",
+      "task": "完成新版 onboarding 设计稿",
+      "deadline": "2026-05-22",
+      "priority": "medium"
+    },
+    {
+      "owner": "赵六",
+      "task": "制定新用户运营策略",
+      "deadline": "2026-05-29",
+      "priority": "medium"
+    },
+    {
+      "owner": "孙七",
+      "task": "完成数据平台架构方案",
+      "deadline": "2026-06-05",
+      "priority": "low"
+    }
+  ],
+  "disputes": [
+    {
+      "topic": "前端框架选型",
+      "positions": [
+        "React: 团队熟悉度高",
+        "Vue: 生态更轻量"
+      ],
+      "status": "unresolved"
+    }
+  ]
+}
