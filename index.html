@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniMemo — 多模态会议智能体</title>
+    <meta name="description" content="基于小米 MiMo 全栈模型的智能会议理解与摘要系统">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --secondary: #1A1A2E;
+            --accent: #16213E;
+            --text: #333;
+            --text-light: #666;
+            --bg: #f8f9fa;
+            --card-bg: #fff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 100px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        /* Architecture Section */
+        .architecture {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+
+        .arch-diagram {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+
+        .arch-diagram pre {
+            color: #fff;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        /* Models Section */
+        .models {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .model-card {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .model-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .model-card .model-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .model-card p {
+            opacity: 0.9;
+            line-height: 1.7;
+        }
+
+        /* Token Section */
+        .token {
+            padding: 100px 0;
+            background: var(--bg);
+        }
+
+        .token-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .token-table th,
+        .token-table td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .token-table th {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .token-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .token-table tr:hover td {
+            background: #f8f9fa;
+        }
+
+        .token-highlight {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Roadmap Section */
+        .roadmap {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .roadmap-timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 40px auto 0;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary);
+            transform: translateX(-50%);
+        }
+
+        .roadmap-item {
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .roadmap-item:nth-child(odd) {
+            text-align: right;
+            padding-right: calc(50% + 30px);
+        }
+
+        .roadmap-item:nth-child(even) {
+            text-align: left;
+            padding-left: calc(50% + 30px);
+        }
+
+        .roadmap-dot {
+            position: absolute;
+            left: 50%;
+            top: 20px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px var(--primary);
+        }
+
+        .roadmap-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .roadmap-phase {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .roadmap-content h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .roadmap-content p {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .cta p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--secondary);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .roadmap-timeline::before {
+                left: 20px;
+            }
+
+            .roadmap-item:nth-child(odd),
+            .roadmap-item:nth-child(even) {
+                text-align: left;
+                padding-left: 60px;
+                padding-right: 0;
+            }
+
+            .roadmap-dot {
+                left: 20px;
+            }
+
+            .token-table {
+                font-size: 0.9rem;
+            }
+
+            .token-table th,
+            .token-table td {
+                padding: 15px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .animate-delay-1 { animation-delay: 0.1s; }
+        .animate-delay-2 { animation-delay: 0.2s; }
+        .animate-delay-3 { animation-delay: 0.3s; }
+        .animate-delay-4 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <div class="hero-badge">小米 MiMo Orbit 100T Token 激励计划</div>
+            <h1>OmniMemo</h1>
+            <p>基于小米 MiMo 全栈模型（Pro + Omni + TTS）的智能会议理解与摘要系统<br>让每一次会议都有价值</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/ohh561/OmniMemo" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub 仓库
+                </a>
+                <a href="#features" class="btn btn-secondary">
+                    了解更多
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17l9.2-9.2M17 17V7H7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>核心功能</h2>
+                <p>OmniMemo 提供完整的会议理解与摘要解决方案</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card animate animate-delay-1">
+                    <div class="feature-icon">🎙️</div>
+                    <h3>多模态输入</h3>
+                    <p>支持会议录音、视频、截图、白板照片等多种输入方式，全面捕捉会议内容</p>
+                </div>
+                <div class="feature-card animate animate-delay-2">
+                    <div class="feature-icon">🧠</div>
+                    <h3>跨模态理解</h3>
+                    <p>MiMo-Omni 原生统一处理音频+视频+图像+文本，无需拼接多个 API pipeline</p>
+                </div>
+                <div class="feature-card animate animate-delay-3">
+                    <div class="feature-icon">📝</div>
+                    <h3>结构化纪要</h3>
+                    <p>自动提取决策点、行动项、争议焦点，分层输出（摘要→议题→行动项）</p>
+                </div>
+                <div class="feature-card animate animate-delay-4">
+                    <div class="feature-icon">🔊</div>
+                    <h3>语音摘要</h3>
+                    <p>MiMo-TTS 生成 3 分钟语音回顾 1 小时会议，通勤路上也能掌握要点</p>
+                </div>
+                <div class="feature-card animate animate-delay-1">
+                    <div class="feature-icon">🤖</div>
+                    <h3>Agent 调度</h3>
+                    <p>根据会议类型（周报/技术评审/客户沟通）自动选择分析模板</p>
+                </div>
+                <div class="feature-card animate animate-delay-2">
+                    <div class="feature-icon">💬</div>
+                    <h3>多轮追问</h3>
+                    <p>支持会议内容的深度交互，"上次讨论的 API 方案最终定了没？"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section class="architecture">
+        <div class="container">
+            <div class="section-title">
+                <h2>系统架构</h2>
+                <p>基于 MiMo 全栈模型的完整处理流程</p>
+            </div>
+            <div class="arch-diagram">
+                <pre>
+┌──────────────────────────────────────────────────────────────┐
+│                        OmniMemo                              │
+├──────────────────────────────────────────────────────────────┤
+│  用户上传                                                    │
+│  (录音/视频/截图/白板)                                        │
+│       ↓                                                      │
+│  MiMo-Omni (跨模态理解)                                      │
+│  原生统一处理 音频+视频+图像+文本                              │
+│       ↓                                                      │
+│  MiMo-Pro (深度推理 Agent)                                    │
+│  发言人识别 → 决策提取 → 行动项生成 → 争议标注                 │
+│       ↓                                                      │
+│  MiMo-TTS (语音播报)                                         │
+│  结构化纪要 → 自然流畅的中文/英文语音摘要                       │
+│       ↓                                                      │
+│  输出：结构化纪要 + 3分钟语音摘要 + 交互式追问                  │
+└──────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Models Section -->
+    <section class="models">
+        <div class="container">
+            <div class="section-title">
+                <h2>MiMo 模型矩阵</h2>
+                <p>OmniMemo 使用 MiMo 全栈模型，各司其职</p>
+            </div>
+            <div class="models-grid">
+                <div class="model-card animate animate-delay-1">
+                    <h3>MiMo-V2.5-Omni</h3>
+                    <span class="model-tag">跨模态理解</span>
+                    <p>原生支持音频+视频+图像+文本统一处理，理解"谁在什么上下文中说了什么"</p>
+                </div>
+                <div class="model-card animate animate-delay-2">
+                    <h3>MiMo-V2.5-Pro</h3>
+                    <span class="model-tag">深度推理</span>
+                    <p>长链推理能力，识别发言人角色、提取决策点、行动项、争议焦点</p>
+                </div>
+                <div class="model-card animate animate-delay-3">
+                    <h3>MiMo-V2.5-TTS</h3>
+                    <span class="model-tag">语音合成</span>
+                    <p>支持中英双语，生成自然流畅的语音摘要，3 分钟听完 1 小时会议</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Token Section -->
+    <section class="token">
+        <div class="container">
+            <div class="section-title">
+                <h2>Token 消耗预估</h2>
+                <p>清晰的 Token 使用场景和预估</p>
+            </div>
+            <table class="token-table">
+                <thead>
+                    <tr>
+                        <th>场景</th>
+                        <th>单次消耗</th>
+                        <th>月度目标</th>
+                        <th>月度总量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1h 会议（多模态）</td>
+                        <td>~15-20 万 Token</td>
+                        <td>200+ 场</td>
+                        <td class="token-highlight">3000-4000 万 Token</td>
+                    </tr>
+                    <tr>
+                        <td>语音摘要生成</td>
+                        <td>~5-10 万 Token</td>
+                        <td>200+ 场</td>
+                        <td class="token-highlight">1000-2000 万 Token</td>
+                    </tr>
+                    <tr>
+                        <td>多轮追问交互</td>
+                        <td>~3-5 万 Token</td>
+                        <td>500+ 次</td>
+                        <td class="token-highlight">1500-2500 万 Token</td>
+                    </tr>
+                    <tr>
+                        <td><strong>月度总计</strong></td>
+                        <td></td>
+                        <td></td>
+                        <td class="token-highlight"><strong>5500-8500 万 Token</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Roadmap Section -->
+    <section class="roadmap">
+        <div class="container">
+            <div class="section-title">
+                <h2>发展路线</h2>
+                <p>从 MVP 到企业级产品的完整规划</p>
+            </div>
+            <div class="roadmap-timeline">
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <span class="roadmap-phase">Phase 1</span>
+                        <h3>MVP</h3>
+                        <p>架构设计完成、多模态输入处理、结构化纪要生成、基础 Web 界面</p>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <span class="roadmap-phase">Phase 2</span>
+                        <h3>V1.0</h3>
+                        <p>TTS 语音摘要集成、Agent 调度系统、多会议类型模板、用户认证系统</p>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <span class="roadmap-phase">Phase 3</span>
+                        <h3>V2.0</h3>
+                        <p>企业级部署、团队协作功能、会议历史分析、API 开放平台</p>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <span class="roadmap-phase">Phase 4</span>
+                        <h3>V3.0</h3>
+                        <p>实时会议转录、多语言支持、移动端应用、生态集成（钉钉/飞书/企业微信）</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>支持 OmniMemo</h2>
+            <p>基于小米 MiMo 全栈模型的多模态会议智能体，让每一次会议都有价值</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/ohh561/OmniMemo" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    Star on GitHub
+                </a>
+                <a href="https://100t.xiaomimimo.com/" class="btn btn-secondary">
+                    MiMo Orbit 申请
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 OmniMemo | 基于 <a href="https://mimo.xiaomi.com/">小米 MiMo</a> 全栈模型 | <a href="https://github.com/ohh561/OmniMemo">GitHub</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.feature-card, .model-card').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

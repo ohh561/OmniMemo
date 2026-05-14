@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniMemo — 多模态会议智能体</title>
+    <meta name="description" content="基于 MiMo V2.5 全栈模型的智能会议理解与摘要系统，利用 100 万 token 上下文窗口处理完整会议记录">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --secondary: #0F0F23;
+            --accent: #1A1A3E;
+            --text: #E0E0E0;
+            --text-muted: #8888AA;
+            --bg: #0A0A1A;
+            --card-bg: #12122A;
+            --card-border: #1E1E3A;
+            --code-bg: #1A1A35;
+            --success: #4ADE80;
+            --warning: #FBBF24;
+        }
+        body { font-family: 'Inter', -apple-system, sans-serif; line-height: 1.7; color: var(--text); background: var(--bg); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, var(--secondary) 0%, #1A0A2E 50%, var(--accent) 100%);
+            padding: 100px 0 80px; text-align: center; position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(255,107,53,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(100,100,255,0.05) 0%, transparent 50%);
+        }
+        .hero h1 { font-size: 3.2rem; font-weight: 700; margin-bottom: 16px; position: relative; }
+        .hero h1 span { color: var(--primary); }
+        .hero p.subtitle { font-size: 1.2rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 32px; position: relative; }
+        .badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; }
+        .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; border: 1px solid var(--card-border); background: var(--card-bg); }
+        .badge.highlight { border-color: var(--primary); color: var(--primary); }
+
+        /* Sections */
+        section { padding: 80px 0; }
+        section h2 { font-size: 2rem; font-weight: 600; margin-bottom: 40px; text-align: center; }
+        section h2 span { color: var(--primary); }
+
+        /* Cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 28px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary); }
+        .card .icon { font-size: 2rem; margin-bottom: 12px; }
+        .card h3 { font-size: 1.1rem; margin-bottom: 8px; color: #fff; }
+        .card p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Architecture */
+        .arch-box {
+            background: var(--code-bg); border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 32px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+            line-height: 1.8; overflow-x: auto; color: var(--text-muted);
+        }
+        .arch-box .highlight { color: var(--primary); font-weight: 600; }
+        .arch-box .success { color: var(--success); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+        .stat { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px; }
+        .stat .number { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+        .stat .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* CLI Demo */
+        .cli-demo {
+            background: #0D0D1A; border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+            overflow-x: auto;
+        }
+        .cli-demo .prompt { color: var(--success); }
+        .cli-demo .output { color: var(--text-muted); }
+        .cli-demo .comment { color: #555577; }
+
+        /* Tech Stack */
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .tech-item {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px;
+            padding: 16px; text-align: center;
+        }
+        .tech-item .name { font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .tech-item .desc { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Context Window */
+        .context-demo {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 32px; margin-top: 24px;
+        }
+        .context-bar {
+            height: 40px; border-radius: 8px; position: relative; overflow: hidden; margin: 16px 0;
+            background: linear-gradient(90deg, #1E1E3A 0%, #1E1E3A 100%);
+        }
+        .context-fill {
+            height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 600; color: #fff;
+        }
+        .context-fill.traditional { width: 5%; background: #444466; }
+        .context-fill.mimo { width: 100%; background: linear-gradient(90deg, var(--primary), #FF8F65); }
+        .context-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Footer */
+        footer { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--card-border); }
+        footer a { color: var(--primary); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="container">
+        <h1>🧠 <span>Omni</span>Memo</h1>
+        <p class="subtitle">基于 MiMo V2.5 全栈模型的多模态会议智能体 — 利用 100 万 token 上下文窗口，一次性处理完整会议记录</p>
+        <div class="badge-row">
+            <span class="badge highlight">MiMo 1M Context</span>
+            <span class="badge">MiMo-Omni</span>
+            <span class="badge">MiMo-Pro</span>
+            <span class="badge">MiMo-TTS</span>
+            <span class="badge">Python 3.10+</span>
+            <span class="badge">MIT License</span>
+        </div>
+    </div>
+</div>
+
+<section>
+    <div class="container">
+        <h2>🎯 为什么需要 <span>100 万 token</span>？</h2>
+        <div class="context-demo">
+            <p>一场 2 小时的会议，转写文本约 3-5 万字（~4-7 万 token）。传统方案需要切片处理，丢失跨时段上下文关联。</p>
+            <p style="margin-top: 12px; color: var(--primary); font-weight: 600;">OmniMemo 利用 MiMo 的 100 万 token 上下文窗口，一次性载入完整会议记录，保留所有跨时段关联。</p>
+            <div style="margin-top: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <span style="color: #888; font-size: 0.85rem; width: 120px;">传统方案 (32K)</span>
+                    <div class="context-bar" style="flex: 1;">
+                        <div class="context-fill traditional">~3%</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="color: var(--primary); font-size: 0.85rem; width: 120px; font-weight: 600;">MiMo (1M)</span>
+                    <div class="context-bar" style="flex: 1;">
+                        <div class="context-fill mimo">1,000,000 tokens</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section style="background: var(--secondary);">
+    <div class="container">
+        <h2>✨ <span>核心</span>能力</h2>
+        <div class="card-grid">
+            <div class="card">
+                <div class="icon">🎙️</div>
+                <h3>多模态输入</h3>
+                <p>支持会议录音、视频、截图、白板照片。MiMo-Omni 原生统一处理，无需拼接多个 API pipeline。</p>
+            </div>
+            <div class="card">
+                <div class="icon">🧠</div>
+                <h3>跨模态理解</h3>
+                <p>"张总指着第三季度报表说这个数据有问题" — Omni 同时理解语音和图表含义，建立跨模态关联。</p>
+            </div>
+            <div class="card">
+                <div class="icon">📝</div>
+                <h3>结构化纪要</h3>
+                <p>自动提取决策点、行动项、争议焦点。分层输出：摘要→议题→行动项，支持 Markdown 和 JSON 格式。</p>
+            </div>
+            <div class="card">
+                <div class="icon">🔊</div>
+                <h3>语音摘要</h3>
+                <p>MiMo-TTS 生成 3 分钟语音回顾 1 小时会议，通勤时轻松回顾核心内容。</p>
+            </div>
+            <div class="card">
+                <div class="icon">🤖</div>
+                <h3>智能调度</h3>
+                <p>自动识别会议类型（站会/周会/技术评审/客户沟通），匹配最佳分析模板和输出格式。</p>
+            </div>
+            <div class="card">
+                <div class="icon">📊</div>
+                <h3>长上下文优势</h3>
+                <p>100 万 token 窗口可处理 4-6 小时完整会议，跨时段追踪议题、关联发言人、溯源决策。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="container">
+        <h2>🏗️ <span>系统</span>架构</h2>
+        <div class="arch-box">
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│</span>                         <span class="success">OmniMemo Pipeline</span>                            <span class="highlight">│</span>
+<span class="highlight">├─────────────────────────────────────────────────────────────────────┤</span>
+<span class="highlight">│</span>                                                                     <span class="highlight">│</span>
+<span class="highlight">│</span>  📁 输入层                                                          <span class="highlight">│</span>
+<span class="highlight">│</span>  ├── 会议录音/视频 (MP3/MP4/WAV)                                    <span class="highlight">│</span>
+<span class="highlight">│</span>  ├── 屏幕共享截图 / 白板照片 (PNG/JPG)                              <span class="highlight">│</span>
+<span class="highlight">│</span>  └── 转写文本 / 字幕文件 (TXT/SRT)                                  <span class="highlight">│</span>
+<span class="highlight">│</span>                           ↓                                         <span class="highlight">│</span>
+<span class="highlight">│</span>  🧠 MiMo-Omni (跨模态理解)                                          <span class="highlight">│</span>
+<span class="highlight">│</span>  ├── 原生统一处理: 音频 + 视频 + 图像 + 文本                        <span class="highlight">│</span>
+<span class="highlight">│</span>  ├── 发言人识别 + 内容提取 + 引用标注                               <span class="highlight">│</span>
+<span class="highlight">│</span>  └── 长文本分片策略: 自动利用 1M 上下文窗口                         <span class="highlight">│</span>
+<span class="highlight">│</span>                           ↓                                         <span class="highlight">│</span>
+<span class="highlight">│</span>  🤖 Agent 调度器                                                    <span class="highlight">│</span>
+<span class="highlight">│</span>  └── 自动识别会议类型 → 选择分析模板                                <span class="highlight">│</span>
+<span class="highlight">│</span>                           ↓                                         <span class="highlight">│</span>
+<span class="highlight">│</span>  🧠 MiMo-Pro (深度推理)                                             <span class="highlight">│</span>
+<span class="highlight">│</span>  ├── 决策提取 + 行动项生成 + 争议标注                               <span class="highlight">│</span>
+<span class="highlight">│</span>  └── 分层结构化输出: 摘要 → 议题 → 行动项                           <span class="highlight">│</span>
+<span class="highlight">│</span>                           ↓                                         <span class="highlight">│</span>
+<span class="highlight">│</span>  🔊 MiMo-TTS (语音合成)                                             <span class="highlight">│</span>
+<span class="highlight">│</span>  └── 结构化纪要 → 3 分钟自然语音摘要                                <span class="highlight">│</span>
+<span class="highlight">│</span>                           ↓                                         <span class="highlight">│</span>
+<span class="highlight">│</span>  📤 输出: Markdown 纪要 + JSON 数据 + 语音摘要 + 交互式追问         <span class="highlight">│</span>
+<span class="highlight">│</span>                                                                     <span class="highlight">│</span>
+<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+        </div>
+    </div>
+</section>
+
+<section style="background: var(--secondary);">
+    <div class="container">
+        <h2>🚀 <span>CLI</span> 演示</h2>
+        <div class="cli-demo">
+<span class="comment"># 安装</span>
+<span class="prompt">$</span> pip install -e .
+
+<span class="comment"># 查看配置</span>
+<span class="prompt">$</span> omni-memo info
+<span class="output">┌──────────────┬──────────────────────────────────┐
+│ MiMo API Base │ https://api.xiaomimimo.com/v1   │
+│ Omni 模型     │ mimo-v2.5-omni                   │
+│ 上下文窗口    │ 1,000,000 tokens                 │
+└──────────────┴──────────────────────────────────┘</span>
+
+<span class="comment"># 查看文件统计（演示 1M 上下文优势）</span>
+<span class="prompt">$</span> omni-memo stats examples/sample_meeting.txt
+<span class="output">┌──────────────────────────────────────┐
+│ 文件: examples/sample_meeting.txt     │
+│ 预估 Token: 68,432                   │
+│ 需要 1M 上下文: ✔ 是                 │
+└──────────────────────────────────────┘</span>
+
+<span class="comment"># 处理会议文件</span>
+<span class="prompt">$</span> omni-memo process examples/sample_meeting.txt --format markdown
+<span class="output">╭──── 会议纪要 ────────────────────────────╮
+│ # Q2 产品路线图规划会                     │
+│ **参会人**: 张三、李四、王五、赵六、孙七  │
+│                                          │
+│ ## ✅ 决策                               │
+│ - Q2 核心方向: 用户增长 + 技术债务并行    │
+│ - 数据平台节奏: Q2 调研, Q3 实施          │
+│                                          │
+│ ## 🎯 行动项                             │
+│ - [high] 张三: 支付模块方案评审           │
+│ - [high] 李四: 支付模块拆分第一阶段       │
+╰──────────────────────────────────────────╯</span>
+
+<span class="comment"># 生成语音摘要</span>
+<span class="prompt">$</span> omni-memo process meeting.txt --voice -o ./output
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="container">
+        <h2>🛠️ <span>技术</span>栈</h2>
+        <div class="tech-grid">
+            <div class="tech-item"><div class="name">MiMo-V2.5-Omni</div><div class="desc">跨模态理解</div></div>
+            <div class="tech-item"><div class="name">MiMo-V2.5-Pro</div><div class="desc">深度推理</div></div>
+            <div class="tech-item"><div class="name">MiMo-V2.5-TTS</div><div class="desc">语音合成</div></div>
+            <div class="tech-item"><div class="name">Python 3.10+</div><div class="desc">核心语言</div></div>
+            <div class="tech-item"><div class="name">Click + Rich</div><div class="desc">CLI 框架</div></div>
+            <div class="tech-item"><div class="name">OpenAI SDK</div><div class="desc">API 客户端</div></div>
+            <div class="tech-item"><div class="name">pytest</div><div class="desc">测试框架</div></div>
+            <div class="tech-item"><div class="name">GitHub Actions</div><div class="desc">CI/CD</div></div>
+        </div>
+    </div>
+</section>
+
+<section style="background: var(--secondary);">
+    <div class="container">
+        <h2>📊 <span>Token</span> 消耗预估</h2>
+        <div class="stats-grid">
+            <div class="stat"><div class="number">15-20万</div><div class="label">单次会议 Token</div></div>
+            <div class="stat"><div class="number">200+</div><div class="label">月处理会议数</div></div>
+            <div class="stat"><div class="number">5500万</div><div class="label">月度 Token 总量</div></div>
+            <div class="stat"><div class="number">100万</div><div class="label">上下文窗口</div></div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>OmniMemo — 基于 MiMo V2.5 全栈模型的多模态会议智能体</p>
+        <p style="margin-top: 8px;">
+            <a href="https://github.com/ohh561/OmniMemo">GitHub</a> ·
+            <a href="https://mimo.xiaomi.com/">MiMo 官网</a> ·
+            <a href="https://platform.xiaomimimo.com/">MiMo API</a>
+        </p>
+        <p style="margin-top: 8px;">MIT License © 2026</p>
+    </div>
+</footer>
+
+</body>
+</html>
